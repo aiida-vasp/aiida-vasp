@@ -80,17 +80,10 @@ A typical `inputs` dictionary for `VaspWorkChain` looks like
 
 ```python
 inputs = {
-  'structure': si_structure,  # An instance of aiida.orm.StructureData
-  'parameters': incar_tags,   # An instance of aiida.orm.Dict
-  'calc':
-    {'options':
-      {'resources':
-         {
-          'num_machines': 1
-         }
-      }
-    },
-  # ....
+    'structure': si_structure,  # An instance of aiida.orm.StructureData
+    'parameters': incar_tags,  # An instance of aiida.orm.Dict
+    'calc': {'options': {'resources': {'num_machines': 1}}},
+    # ....
 }
 ```
 

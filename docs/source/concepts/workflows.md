@@ -68,6 +68,7 @@ For example, to set the parameters one can use do the following:
 
 ```python
 from aiida.plugins import WorkflowFactory
+
 builder = WorkflowFactory('vasp.v2.relax').get_builder()
 builder.vasp.parameters = Dict(dict={'incar': {'encut': 500, 'isif': 2, 'nsw': 5, 'potim': 0.01}})
 ```
@@ -76,8 +77,11 @@ while when using {{ VaspWorkChain }} directly, one can use:
 
 ```python
 from aiida.plugins import WorkflowFactory
+
 builder = WorkflowFactory('vasp.v2.vasp').get_builder()
-builder.parameters = {'incar': {'encut': 500, 'isif': 2, 'nsw': 5, 'potim': 0.01}}  # This gets converted to a Dict automatically
+builder.parameters = {
+    'incar': {'encut': 500, 'isif': 2, 'nsw': 5, 'potim': 0.01}
+}  # This gets converted to a Dict automatically
 ```
 
 The other options at the top level are specific to the workchain and are used to control its behavior.
@@ -118,6 +122,7 @@ For example, the following code load the standard `VaspWorkChain` in a shell lau
 
 ```python
 from aiida.plugins import WorkflowFactory  # This can be omitted as it is imported by default with verdi shell
+
 vasp_wc = WorkflowFactory('vasp.vasp')
 ```
 

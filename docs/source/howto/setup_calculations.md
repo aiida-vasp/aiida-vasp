@@ -43,7 +43,6 @@ The third way is to look into the source code, for example, the  `VaspWorkChain`
 
 ```python
 class VaspWorkChain:
-
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
         super(VaspWorkChain, cls).define(spec)
@@ -82,14 +81,10 @@ For example, the following code exposes *all* ports of a {{ VaspCalculation }} e
 
 ```python
 class UserWorkChain:
-
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
         super(VaspWorkChain, cls).define(spec)
-        spec.expose_inputs(
-            cls._process_class, namespace='calc',
-            exclude=('kpoints',)
-        )
+        spec.expose_inputs(cls._process_class, namespace='calc', exclude=('kpoints',))
 
         spec.input('kpoints', valid_type=orm.KpointsData, required=False)
         spec.input('kpoints_spacing', valid_type=orm.Float, required=False)
@@ -158,17 +153,10 @@ A typical `inputs` dictionary for `VaspWorkChain` looks like
 
 ```python
 inputs = {
-  'structure': si_structure,  # An instance of aiida.orm.StructureData
-  'parameters': incar_tags,   # An instance of aiida.orm.Dict
-  'calc':
-    {'options':
-      {'resources':
-         {
-          'num_machines': 1
-         }
-      }
-    },
-  # ....
+    'structure': si_structure,  # An instance of aiida.orm.StructureData
+    'parameters': incar_tags,  # An instance of aiida.orm.Dict
+    'calc': {'options': {'resources': {'num_machines': 1}}},
+    # ....
 }
 ```
 
@@ -323,11 +311,11 @@ Atoms may be fined by setting the `dynamics` input port using a dictionary:
 
 ```python
 dynamics = {
-  'positions_dof': [
-    [1, 1, 1],
-    [0, 0, 0],
-    [0, 0, 1],
-  ]
+    'positions_dof': [
+        [1, 1, 1],
+        [0, 0, 0],
+        [0, 0, 1],
+    ]
 }
 ```
 
@@ -346,12 +334,10 @@ For example, if one wants to completely fix all atoms between  $\mathrm{2 \AA}$ 
 
 ```python
 z = builder.structure.get_ase().positions[:, 2]
-to_fix  = (z < 4) & (z > 2)
+to_fix = (z < 4) & (z > 2)
 dof = [[1, 1, 1] if not fix else [0, 0, 0] for fix in to_fix]
 
-builder.dynamics = {
-  'positions_dof': dof
-}
+builder.dynamics = {'positions_dof': dof}
 ```
 
 :::{caution}
@@ -385,8 +371,8 @@ builder.dynamics = {
     'positions_dof': [
         [False, False, False],  # atom 0: fixed
         [False, False, False],  # atom 1: fixed
-        [True, True, False],    # atom 2: z fixed, x,y movable
-        [True, True, True],     # atom 3: free
+        [True, True, False],  # atom 2: z fixed, x,y movable
+        [True, True, True],  # atom 3: free
     ]
 }
 ```

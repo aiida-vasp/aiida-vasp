@@ -25,6 +25,7 @@ already contains routines for converting `ase.Atoms` between `aiida.orm.Structur
 
 ```python
 from aiida import orm
+
 structure = orm.StructureData(ase=ase_atoms)
 atoms = structure.get_ase()
 ```
@@ -33,6 +34,7 @@ In addition, ASE can be very useful for visualizing the structures in a notebook
 
 ```python
 from ase.visualize import view
+
 view(structure_node.get_ase())
 ```
 
@@ -59,7 +61,7 @@ else:
                 atoms = [AseAtomsAdaptor.get_atoms(s) for s in atoms]
         elif isinstance(atoms, Structure):
             atoms = AseAtomsAdaptor.get_atoms(atoms)
-        elif hasattr(atoms, 'get_ase'):   # check if a aiida.orm.StructureData
+        elif hasattr(atoms, 'get_ase'):  # check if a aiida.orm.StructureData
             atoms = atoms.get_ase()
         return aview(atoms, *args, **kwargs)
 ```
@@ -74,6 +76,7 @@ The `pymatgen.core.Structure` can be converted to `aiida.orm.StructureData` and 
 
 ```python
 from aiida import orm
+
 structure_node = orm.StructureData(pymatgen=pymatgen_structure)
 pymatgen_structure = structure_node.get_pymatgen()
 ```

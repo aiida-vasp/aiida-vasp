@@ -47,25 +47,22 @@ different format for the `parser_settings`.
 Previously, this looks like:
 ```python
 parser_settings = {
-        "add_energies": True,
-        "add_forces": True,
-        "add_stress": True,
-        "add_bands": True,
-        "electronic_step_energies": True,
-    }
-builder.settings = Dict({'parser_settings' : parser_settings})
+    'add_energies': True,
+    'add_forces': True,
+    'add_stress': True,
+    'add_bands': True,
+    'electronic_step_energies': True,
+}
+builder.settings = Dict({'parser_settings': parser_settings})
 ```
 
 Now, one should use:
 
 ```python
-parser_settings = {
-  include_node: ['energies', 'bands'],
-'electronic_step_energies': True
-}
-builder.settings = Dict({'parser_settings' : parser_settings})
+parser_settings = {include_node: ['energies', 'bands'], 'electronic_step_energies': True}
+builder.settings = Dict({'parser_settings': parser_settings})
 # Getting energies
-energies = node.outputs.arrays.get_array("energy_extrapolated")
+energies = node.outputs.arrays.get_array('energy_extrapolated')
 forces = node.outputs.misc['forces']
 ```
 
