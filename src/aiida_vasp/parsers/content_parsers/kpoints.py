@@ -157,8 +157,15 @@ class KpointsParser(BaseFileParser):
         kpoints_dict['divisions'] = mesh[0]
         kpoints_dict['shifts'] = mesh[1]
         kpoints_dict['mode'] = 'automatic'
-        # Here we need to make a choice, so should add more to AiiDA to make this better defined
-        kpoints_dict['centering'] = 'Gamma'
+        # AiiDA's KpointsData does not model the VASP automatic-mesh header.
+        # Preserve the historical Gamma default while allowing callers to attach
+        # the missing VASP-specific intent explicitly before the node is stored.
+        centering = kpointsdata.base.attributes.get('vasp_centering', 'Gamma')
+        if centering not in {'Gamma', 'Monkhorst-Pack'}:
+            raise ValueError(
+                f"Unsupported VASP automatic-mesh centering {centering!r}; expected 'Gamma' or 'Monkhorst-Pack'."
+            )
+        kpoints_dict['centering'] = centering
         kpoints_dict['num_kpoints'] = 0
 
         return kpoints_dict

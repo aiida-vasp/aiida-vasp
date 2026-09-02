@@ -147,6 +147,27 @@ def test_parse_kpoints_data(vasp_kpoints, tmpdir):
     compare_kpoints_content(result, result_ref)
 
 
+@pytest.mark.parametrize(['vasp_kpoints'], [('mesh',)], indirect=True)
+def test_write_automatic_monkhorst_pack_kpoints(vasp_kpoints, tmpdir):
+    """An explicit node attribute preserves the genuine VASP MP header."""
+    kpoints_data, _ = vasp_kpoints
+    kpoints_data.base.attributes.set('vasp_centering', 'Monkhorst-Pack')
+    path = str(tmpdir.join('KPOINTS'))
+    KpointsParser(data=kpoints_data).write(path)
+    with open(path, encoding='utf8') as handle:
+        result = KpointsParser(handler=handle).get_quantity('kpoints-kpoints')
+    assert result['centering'] == 'Monkhorst-Pack'
+
+
+@pytest.mark.parametrize(['vasp_kpoints'], [('mesh',)], indirect=True)
+def test_reject_unknown_automatic_mesh_centering(vasp_kpoints):
+    """Do not silently turn a misspelled centering into another mesh."""
+    kpoints_data, _ = vasp_kpoints
+    kpoints_data.base.attributes.set('vasp_centering', 'invalid')
+    with pytest.raises(ValueError, match='Unsupported VASP'):
+        KpointsParser(data=kpoints_data)._content_data_to_content_parser()
+
+
 def compare_kpoints_content(kpoints, kpoints_ref):
     """Compare the KPOINTS content with supplied reference data."""
     if kpoints['mode'] == 'explicit':
