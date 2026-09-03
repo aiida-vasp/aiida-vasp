@@ -35,6 +35,55 @@ from .mixins import WithBuilderUpdater
 from .relax import VaspRelaxWorkChain
 from .vasp import VaspWorkChain
 
+
+def _parse_magmom_for_decoration(magmom: Any, is_vector: bool, structure: Any) -> List[Any]:
+    """Convert a raw magmom value (string, scalar list or 3-vector list) into
+    a list of per-site entries suitable for ``magnetic_structure_decorate``.
+
+    ``is_vector`` indicates that ``LNONCOLLINEAR``/``LSORBIT`` is active so
+    the input must be reshaped into one 3-tuple per site.
+    """
+    if isinstance(magmom, str):
+        flat = [float(x) for x in magmom.split()]
+    elif isinstance(magmom, (int, float)):
+        flat = [float(magmom)] * len(structure.sites)
+    else:
+        flat = []
+        for entry in magmom:
+            if isinstance(entry, (list, tuple)):
+                flat.extend(float(x) for x in entry)
+            else:
+                flat.append(float(entry))
+
+    if is_vector:
+        n_sites = len(structure.sites)
+        if len(flat) != 3 * n_sites:
+            raise ValueError(f'For non-collinear magmom, expected {3 * n_sites} components but got {len(flat)}.')
+        return [list(flat[i * 3 : (i + 1) * 3]) for i in range(n_sites)]
+
+    n_sites = len(structure.sites)
+    if len(flat) == n_sites:
+        return list(flat)
+    # Allow the case where the user already supplied nested per-site 3-vectors
+    if len(flat) == 3 * n_sites:
+        return [[flat[i * 3], flat[i * 3 + 1], flat[i * 3 + 2]] for i in range(n_sites)]
+    return flat
+
+
+def _magmom_list_to_incar(magmom_list: Any) -> str:
+    """Flatten the magmom list coming back from
+    ``magnetic_structure_dedecorate`` into a VASP INCAR-style space-separated
+    string. Each entry may be a scalar or a 3-vector.
+    """
+    flat: List[float] = []
+    for entry in magmom_list:
+        if isinstance(entry, (list, tuple)):
+            flat.extend(float(x) for x in entry)
+        else:
+            flat.append(float(entry))
+    return ' '.join(repr(x) for x in flat)
+
+
 SITE_MAG_THRESHOLD = 0  # Threshold for considering a site to be magnetic
 
 
@@ -288,8 +337,12 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         if 'magmom' in param[OVERRIDE_NAMESPACE] and not self.inputs.band_settings['only_dos']:
             self.report('Magnetic system passed for BS')
             self.ctx.magmom = param[OVERRIDE_NAMESPACE]['magmom']
+            self.ctx.magmom_is_vector = bool(param[OVERRIDE_NAMESPACE].get('lnoncollinear')) or bool(
+                param[OVERRIDE_NAMESPACE].get('lsorbit')
+            )
         else:
             self.ctx.magmom = None
+            self.ctx.magmom_is_vector = False
 
     def should_do_relax(self) -> bool:
         """Wether we should do relax or not"""
@@ -386,18 +439,20 @@ class VaspBandsWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
             func = kpath_from_sumo_v2
 
         magmom = self.ctx.get('magmom', None)
+        magmom_is_vector = self.ctx.get('magmom_is_vector', False)
 
         # For magnetic structures, create different kinds for the analysis in case that the
         # symmetry should be lowered. This also makes sure that the magnetic moments are consistent
         if magmom:
-            decorate_result = magnetic_structure_decorate(self.ctx.current_structure, orm.List(list=magmom))
+            magmom_list = _parse_magmom_for_decoration(magmom, magmom_is_vector, self.ctx.current_structure)
+            decorate_result = magnetic_structure_decorate(self.ctx.current_structure, orm.List(list=magmom_list))
             decorated = decorate_result['structure']
             # Run seekpath on the decorated structure
             kpath_results = func(decorated, **inputs)
             decorated_primitive = kpath_results['primitive_structure']
             # Convert back to undecorated structures and add consistent magmom input
             dedecorate_result = magnetic_structure_dedecorate(decorated_primitive, decorate_result['mapping'])
-            self.ctx.magmom = dedecorate_result['magmom'].get_list()
+            self.ctx.magmom = _magmom_list_to_incar(dedecorate_result['magmom'].get_list())
             self.ctx.current_structure = dedecorate_result['structure']
         else:
             kpath_results = func(self.ctx.current_structure, **inputs)
@@ -862,15 +917,21 @@ class VaspHybridBandsWorkChain(VaspBandsWorkChain):
         incar_scf = self.inputs.scf.parameters['incar']
         magmom = incar_scf.get('magmom', None)
         symmetry_reduce = incar_scf.get('isym', 2) > 0
+        lnoncollinear = bool(incar_scf.get('lnoncollinear')) or bool(incar_scf.get('lsorbit'))
         if symmetry_reduce and magmom is not None:
             # Check if symmetry is broken by magnetic moments
             species = self.inputs.structure.get_ase().get_chemical_symbols()
             if isinstance(magmom, str):
                 magmom = magmom.split()
-            assert len(magmom) == len(species), (
-                f'Mismatch between the magmom ({len(magmom)}) and the number of atoms ({len(species)}).'
+            # For non-collinear magmom is given as (mx my mz) per atom, group them
+            if lnoncollinear and len(magmom) == 3 * len(species):
+                grouped = [tuple(magmom[i * 3 : (i + 1) * 3]) for i in range(len(species))]
+            else:
+                grouped = magmom
+            assert len(grouped) == len(species), (
+                f'Mismatch between the magmom ({len(grouped)}) and the number of atoms ({len(species)}).'
             )
-            if len(set(zip(magmom, species))) != len(set(species)):
+            if len(set(zip(grouped, species))) != len(set(species)):
                 self.report('Symmetry is broken by magnetic magmoms, cannot use spglib to generate the kpoints')
                 return
         kpt = get_ir_kpoints_data(

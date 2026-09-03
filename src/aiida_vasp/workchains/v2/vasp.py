@@ -82,6 +82,62 @@ from .mixins import WithBuilderUpdater
 # pylint: disable=no-member
 
 
+def _is_vector_magmom(entry: Any) -> bool:
+    """Return True if ``entry`` is a 3-component magmom (list / tuple)."""
+    return isinstance(entry, (list, tuple)) and len(entry) == 3
+
+
+def _magmom_entry_to_components(entry: Any) -> List[float]:
+    """Convert a magmom entry to a list of float components."""
+    if _is_vector_magmom(entry):
+        return [float(entry[0]), float(entry[1]), float(entry[2])]
+    return [float(entry)]
+
+
+def _normalise_per_atom_magmom(raw: List[Any], n_sites: Optional[int] = None) -> List[Any]:
+    """Coerce the output of :meth:`orm.List.get_list` into a per-atom magmom list.
+
+    ``orm.List`` flattens nested lists, so callers that supply
+    ``[[x1, y1, z1], [x2, y2, z2]]`` would get back ``[x1, y1, z1, x2, y2, z2]``.
+    We accept both representations and reshape them back to one entry per site.
+    The target representation is a list whose length matches the number of
+    sites, with each entry being either a scalar or a 3-tuple.
+    """
+    if not raw:
+        return list(raw)
+
+    # If every entry is already a list/tuple, we treat the input as the
+    # per-site representation.
+    if all(isinstance(entry, (list, tuple)) for entry in raw):
+        return [_magmom_entry_to_components(entry) for entry in raw]
+
+    # Flat representation. If we know the number of sites and the list length
+    # is exactly 3 * n_sites, treat it as a flat 3-vector representation.
+    if n_sites is not None and len(raw) == 3 * n_sites:
+        return [_magmom_entry_to_components(raw[i * 3 : (i + 1) * 3]) for i in range(n_sites)]
+
+    # Otherwise assume scalar values, one per site.
+    return list(raw)
+
+
+def _magmom_to_incar(magmom: Any) -> Any:
+    """Convert a magmom list into the value used as the INCAR MAGMOM tag.
+
+    For scalar magmoms the returned value is a single space-separated string
+    (one value per site). For 3-vector magmoms (``LNONCOLLINEAR = .TRUE.``)
+    the returned value is also a single space-separated string but with three
+    numbers per site (mx my mz mx my mz ...).
+    """
+    if isinstance(magmom, str):
+        # Already a serialised string, leave it alone.
+        return magmom
+
+    components: List[float] = []
+    for entry in magmom:
+        components.extend(_magmom_entry_to_components(entry))
+    return ' '.join(f'{value!r}' for value in components)
+
+
 class VaspWorkChain(BaseRestartWorkChain, WithBuilderUpdater, ProtocolMixin):
     """
     The VASP workchain.
@@ -227,6 +283,19 @@ A nested dictionary containing the following keys:
             required=False,
             serializer=to_aiida_type,
             help='Mapping for the initial magnetic moments.',
+        )
+        spec.input(
+            'magmom_per_atom',
+            valid_type=orm.List,
+            required=False,
+            serializer=to_aiida_type,
+            help=(
+                'Initial magnetic moment for each atom (one entry per site). '
+                'Each entry may be a scalar (collinear case) or a 3-component '
+                'sequence for non-collinear / spin-orbit calculations '
+                '(LNONCOLLINEAR = .TRUE.). When supplied, this takes precedence '
+                'over ``magmom_mapping``.'
+            ),
         )
         spec.input(
             'site_magnetization',
@@ -477,6 +546,10 @@ A nested dictionary containing the following keys:
         if dict(magmom_mapping):
             builder.magmom_mapping = magmom_mapping
 
+        magmom_per_atom = inputs.get('magmom_per_atom', None)
+        if magmom_per_atom is not None:
+            builder.magmom_per_atom = magmom_per_atom
+
         return builder
 
     def verbose_report(self, *args, **kwargs) -> None:
@@ -519,12 +592,12 @@ A nested dictionary containing the following keys:
         """
         Update magmom from site magnetization information if available
 
+        Both scalar (collinear) and 3-component (non-collinear / spin-orbit)
+        magnetic moments are supported. The magmom is always written into the
+        parameters in the canonical VASP INCAR string form.
+
         :param node: Calculation node to be used, defaults to the last launched calculation.
         """
-        if self.is_noncollinear:
-            self.report('Automatic carrying on magmom for non-collinear magnetism calculation is not implemented.')
-            return
-
         if node is None:
             node = self.ctx.children[-1]
 
@@ -532,7 +605,8 @@ A nested dictionary containing the following keys:
             misc_dict = node.outputs.misc.get_dict()
             if 'site_magnetization' in misc_dict:
                 try:
-                    self.ctx.inputs.parameters['magmom'] = site_magnetization_to_magmom(misc_dict['site_magnetization'])
+                    magmom = site_magnetization_to_magmom(misc_dict['site_magnetization'])
+                    self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom)
                 except ValueError:
                     pass
 
@@ -606,7 +680,7 @@ A nested dictionary containing the following keys:
         if 'site_magnetization' in self.inputs:
             magmom = site_magnetization_to_magmom(self.inputs.site_magnetization.get_dict())
             assert len(magmom) == len(self.inputs.structure.sites)
-            self.ctx.inputs.parameters['magmom'] = magmom
+            self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom)
 
         exit_code = self.setup_potcar()
         if exit_code is not None:
@@ -636,8 +710,21 @@ A nested dictionary containing the following keys:
             # Directly update the raw inputs passed to VaspCalculation
             self.ctx.inputs.parameters.update(ldau_keys)
 
-        # Apply the magmom mapping if supplied
-        if 'magmom_mapping' in self.inputs:
+        # Apply the magmom per-atom if supplied (overrides any other source)
+        if 'magmom_per_atom' in self.inputs:
+            raw = self.inputs.magmom_per_atom.get_list()
+            magmom_list = _normalise_per_atom_magmom(raw, n_sites=len(self.inputs.structure.sites))
+            assert len(magmom_list) == len(self.inputs.structure.sites), (
+                f'Mismatch between magmom_per_atom ({len(magmom_list)}) and number of sites '
+                f'({len(self.inputs.structure.sites)}).'
+            )
+            self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom_list)
+            # If any entry is a vector, ensure non-collinear settings are sensible
+            if any(_is_vector_magmom(entry) for entry in magmom_list):
+                if not self.ctx.inputs.parameters.get('lnoncollinear'):
+                    self.ctx.inputs.parameters['lnoncollinear'] = True
+        elif 'magmom_mapping' in self.inputs:
+            # Apply the magmom mapping if supplied
             mapping = self.inputs.magmom_mapping.get_dict()
             default = mapping.pop('default', 1.0)
             kind_names = set(self.inputs.structure.get_kind_names())
@@ -645,14 +732,13 @@ A nested dictionary containing the following keys:
             mapping = {key: mapping[key] for key in mapping if key in kind_names}
             # Only proceed if mapping is not empty or default is not 1.0 (VASP internal default)
             if mapping or (default != 1.0):
-                magmom = []
+                magmom_list = []
                 for site in self.inputs.structure.sites:
-                    magmom.append(mapping.get(site.kind_name, default))
+                    magmom_list.append(mapping.get(site.kind_name, default))
                 # If ispin is not set (possibly by mistake), we change it to 2
                 if 'ispin' not in self.ctx.inputs.parameters:
                     self.ctx.inputs.parameters['ispin'] = 2
-                # Apply the mapping of the magmoms
-                self.ctx.inputs.parameters['magmom'] = ' '.join(map(str, magmom))
+                self.ctx.inputs.parameters['magmom'] = _magmom_to_incar(magmom_list)
 
         # Attach default monitors if not provided by the user
         if not self.inputs.get('monitors') and not settings_dict.get('no_default_monitors', False):
