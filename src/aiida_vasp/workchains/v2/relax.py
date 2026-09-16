@@ -50,6 +50,20 @@ from .mixins import WithBuilderUpdater
 
 __version__ = '0.5.0'
 
+
+def _magmom_list_to_incar(magmom_list: list) -> str:
+    """Flatten a (possibly mixed scalar / 3-vector) magmom list into a single
+    VASP INCAR-style space-separated string suitable for the ``MAGMOM`` tag.
+    """
+    flat: list[float] = []
+    for entry in magmom_list:
+        if isinstance(entry, (list, tuple)):
+            flat.extend(float(x) for x in entry)
+        else:
+            flat.append(float(entry))
+    return ' '.join(repr(x) for x in flat)
+
+
 # Change log
 # 0.4.0 update such `vasp` namespace in `parameters` is renamed to `incar`
 # 0.5.0 update the logic of convergence checking. Cell comparsion is always done using the input/output structures.
@@ -645,7 +659,9 @@ class VaspRelaxWorkChain(WorkChain, WithBuilderUpdater, ProtocolMixin):
         # Update the magmom to be used
         if 'site_magnetization' in workchain.outputs and self.ctx.relax_settings.get('keep_magnetization', True):
             try:
-                self.ctx.current_magmom = site_magnetization_to_magmom(workchain.outputs.site_magnetization)
+                self.ctx.current_magmom = _magmom_list_to_incar(
+                    site_magnetization_to_magmom(workchain.outputs.site_magnetization)
+                )
             # Some times the site magnetisation can be empty - do nothing
             except ValueError:
                 pass

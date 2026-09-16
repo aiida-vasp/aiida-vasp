@@ -133,22 +133,42 @@ def compose_exit_code(status: int, message: str) -> ExitCode:
 
 def site_magnetization_to_magmom(site_dict: Any) -> List[Any]:
     """
-    Convert site magnetization to MAGMOM used for restart
-    NOTE: Only tested for colinear cases
+    Convert site magnetization to MAGMOM used for restart.
+
+    For collinear calculations (ISPIN = 2) the function returns a list of
+    scalar magnetic moments per site. For non-collinear calculations
+    (LNONCOLLINEAR = .TRUE.) the function returns a list of 3-tuples
+    ``(mx, my, mz)`` per site.
     """
     if 'site_magnetization' in site_dict:
         site_dict = site_dict['site_magnetization']
 
     site_dict = site_dict['sphere']
-    to_use = None
+
+    available_axes = []
     for symbol in 'xyz':
         if site_dict.get(symbol) and site_dict.get(symbol, {}).get('site_moment'):
-            to_use = symbol
-            break
-    # No available site magnetization for setting MAGMOM, something is wrong
-    if to_use is None:
+            available_axes.append(symbol)
+
+    if not available_axes:
         raise ValueError('No valid site-projected magnetization available')
-    # Ensure sorted list
-    tmp = list(site_dict[to_use]['site_moment'].items())
-    tmp.sort(key=lambda x: int(x[0]))
-    return [entry[1]['tot'] for entry in tmp]
+
+    if len(available_axes) > 1:
+        axes = [axis for axis in 'xyz' if axis in available_axes]
+    else:
+        axes = available_axes
+
+    sorted_axes = {}
+    for axis in axes:
+        tmp = list(site_dict[axis]['site_moment'].items())
+        tmp.sort(key=lambda x: int(x[0]))
+        sorted_axes[axis] = [entry[1]['tot'] for entry in tmp]
+
+    n_sites = len(sorted_axes[axes[0]])
+    if len(axes) == 1:
+        return list(sorted_axes[axes[0]])
+    magmom: List[Any] = []
+    for i in range(n_sites):
+        components = [float(sorted_axes[axis][i]) if axis in sorted_axes else 0.0 for axis in 'xyz']
+        magmom.append(tuple(components))
+    return magmom

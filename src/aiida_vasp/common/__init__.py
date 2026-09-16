@@ -88,27 +88,56 @@ def warn_deprecated_options(node: orm.Dict | None, port: Any = None) -> None:
 
 
 @plain_python_args
-def site_magnetization_to_magmom(site_dict: dict[str, Any]) -> list[float]:
+def site_magnetization_to_magmom(site_dict: dict[str, Any]) -> list[Any]:
     """
-    Convert site mangetization to MAGMOM used for restart
+    Convert site mangetization to MAGMOM used for restart.
+
+    For collinear calculations (ISPIN = 2) the function returns a list of
+    scalar magnetic moments per site. For non-collinear calculations
+    (LNONCOLLINEAR = .TRUE.) the function returns a list of 3-tuples
+    ``(mx, my, mz)`` per site.
+
     NOTE: to be replaced by stock function in aiida_vasp.utils.workchains
     """
     if 'site_magnetization' in site_dict:
         site_dict = site_dict['site_magnetization']
 
     site_dict = site_dict['sphere']
-    to_use = None
+
+    # Detect whether we are dealing with a non-collinear case by checking
+    # which directions are populated.
+    available_axes = []
     for symbol in 'xyz':
         if site_dict.get(symbol) and site_dict.get(symbol, {}).get('site_moment'):
-            to_use = symbol
-            break
-    # No avaliable site magnetization for setting MAGMOM, something is wrong
-    if to_use is None:
-        raise ValueError('No valid site-projected magnetization avaliable')
-    # Ensure sorted list
-    tmp = list(site_dict[to_use]['site_moment'].items())
-    tmp.sort(key=lambda x: int(x[0]))
-    return [entry[1]['tot'] for entry in tmp]
+            available_axes.append(symbol)
+
+    if not available_axes:
+        raise ValueError('No valid site-projected magnetization available')
+
+    # Choose the axes used to build the returned magmom. For collinear only
+    # one axis is populated; for noncollinear we use all available axes.
+    if set(available_axes) >= {'x', 'y', 'z'} or len(available_axes) > 1:
+        axes = [axis for axis in 'xyz' if axis in available_axes]
+    else:
+        axes = available_axes
+
+    # Ensure each axis is sorted by site index
+    sorted_axes = {}
+    for axis in axes:
+        tmp = list(site_dict[axis]['site_moment'].items())
+        tmp.sort(key=lambda x: int(x[0]))
+        sorted_axes[axis] = [entry[1]['tot'] for entry in tmp]
+
+    n_sites = len(sorted_axes[axes[0]])
+    if len(axes) == 1:
+        return list(sorted_axes[axes[0]])
+    # Non-collinear: return one 3-tuple per site (zeros are inserted for
+    # missing axes)
+    magmom: list[Any] = []
+    for i in range(n_sites):
+        components = [float(sorted_axes[axis][i]) if axis in sorted_axes else 0.0 for axis in 'xyz']
+        magmom.append(tuple(components))
+    return magmom
 
 
 def nested_update(dict_in: dict[str, Any], update_dict: dict[str, Any], extend_list: bool = False) -> dict[str, Any]:
