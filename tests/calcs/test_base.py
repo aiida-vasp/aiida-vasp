@@ -4,6 +4,7 @@
 import os
 
 import pytest
+from aiida import orm
 from aiida.common.extendeddicts import AttributeDict
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
@@ -39,8 +40,6 @@ def test_remote_copy_restart_folder_without_settings(vasp_calc, vasp_inputs, vas
     ``AttributeError: 'AttributesFrozendict' object has no attribute
     'settings'``.
     """
-    from aiida import orm
-
     (tmp_path / 'CHGCAR').write_text('fake-chgcar', encoding='utf8')
     (tmp_path / 'WAVECAR').write_text('fake-wavecar', encoding='utf8')
     inputs = vasp_inputs(settings=None)
