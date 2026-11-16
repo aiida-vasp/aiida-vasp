@@ -45,9 +45,7 @@ def test_remote_copy_restart_folder_without_settings(vasp_calc, vasp_inputs, vas
     (tmp_path / 'WAVECAR').write_text('fake-wavecar', encoding='utf8')
     inputs = vasp_inputs(settings=None)
     assert 'settings' not in inputs
-    inputs.restart_folder = orm.RemoteData(
-        computer=vasp_code.computer, remote_path=str(tmp_path)
-    ).store()
+    inputs.restart_folder = orm.RemoteData(computer=vasp_code.computer, remote_path=str(tmp_path)).store()
     calc = vasp_calc(inputs=inputs)
     copy_list = calc.remote_copy_restart_folder()
     assert sorted(os.path.basename(entry[1]) for entry in copy_list) == ['CHGCAR', 'WAVECAR']
