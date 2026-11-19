@@ -123,7 +123,12 @@ class VaspCalcBase(CalcJob):
         restart_folder = self.inputs.restart_folder
         computer = self.node.computer
         included = ['CHGCAR', 'WAVECAR']
-        included += self.inputs.settings.base.attributes.get('ADDITIONAL_REMOTE_COPY_LIST', [])
+        # ``settings`` is optional: e.g. the final single-point of ``vasp.relax``
+        # with ``reuse=True`` carries a ``restart_folder`` but no ``settings``.
+        try:
+            included += self.inputs.settings.base.attributes.get('ADDITIONAL_REMOTE_COPY_LIST', [])
+        except AttributeError:
+            pass
         existing_objects = restart_folder.listdir()
         to_copy = []
         for name in included:
